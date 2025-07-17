@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARC Pro v4.1 | Task Solver & Editor</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --panel-bg: #ffffff;
+            --border-color: #d9d9d9;
+            --text-color: #333;
+            --primary-color: #007bff;
+            --primary-hover: #0056b3;
+            --success-color: #28a745;
+            --success-bg: #e9f7ec;
+            --danger-color: #dc3545;
+            --danger-bg: #fdecea;
+            --warning-color: #ffc107;
+            --grid-bg: #ccc;
+            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            /* padding-top будет установлен динамически через JS */
+            transition: padding-top 0.2s;
+        }
+
+        .main-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--panel-bg);
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .header-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .lang-switcher {
+            display: flex;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .lang-switcher button {
+            background-color: transparent;
+            color: var(--text-color);
+            border: none;
+            padding: 0.4rem 0.8rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        .lang-switcher button.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .controls, .tools {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+            align-items: center;
+        }
+
+        button, .tab-button {
+            padding: 0.6rem 1.2rem;
+            font-size: 1rem;
+            border-radius: 5px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            color: white;
+            background-color: var(--primary-color);
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+
+        button:hover, .tab-button:hover { background-color: var(--primary-hover); }
+        .tab-button { background-color: #6c757d; }
+        .tab-button.active { background-color: var(--primary-color); font-weight: bold; }
+
+        button.success { background-color: var(--success-color); }
+        button.success:hover { background-color: #218838; }
+        button.warning { background-color: var(--warning-color); color: #212529; }
+        button.warning:hover { background-color: #e0a800; }
+        button.danger { background-color: var(--danger-color); }
+        button.danger:hover { background-color: #c82333; }
+
+        #task-info { text-align: center; font-size: 0.8em; color: #6c757d; height: 1em; }
+        #tab-nav-wrapper { display: flex; justify-content: center; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        #tab-nav { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+        #creator-tools { display: none; gap: 0.5rem; }
+        
+        .tab-pane { display: none; animation: fadeIn 0.5s; }
+        .tab-pane.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .task-pair { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 2rem; padding: 1rem; background: var(--panel-bg); border-radius: 8px; }
+        .grid-wrapper { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+        .grid-wrapper h3 { margin: 0; font-weight: 500; }
+        .grid-container { display: grid; border: 2px solid var(--grid-bg); background-color: var(--grid-bg); gap: 1px; touch-action: none; }
+
+        .grid-cell { width: clamp(20px, 5vmin, 35px); height: clamp(20px, 5vmin, 35px); cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 0.8em; font-weight: bold; user-select: none; color: transparent; text-shadow: none; transition: color 0.3s; }
+        .show-numbers .grid-cell { color: white; text-shadow: 0 0 2px rgba(0,0,0,0.7); }
+        .show-numbers .grid-cell.color-4, .show-numbers .grid-cell.color-8 { color: black; text-shadow: none; }
+
+        .color-palette { display: flex; justify-content: center; flex-wrap: wrap; gap: 5px; }
+        .color-swatch { width: 35px; height: 35px; border: 2px solid transparent; border-radius: 5px; cursor: pointer; transition: transform 0.2s, border-color 0.2s; display: flex; justify-content: center; align-items: center; font-weight: bold; color: white; text-shadow: 0 0 3px black; }
+        .color-swatch.selected { border-color: var(--primary-color); transform: scale(1.2); }
+
+        .color-0 { background-color: #000000; } .color-1 { background-color: #0074D9; } .color-2 { background-color: #FF4136; } .color-3 { background-color: #2ECC40; } .color-4 { background-color: #FFDC00; } .color-5 { background-color: #AAAAAA; } .color-6 { background-color: #F012BE; } .color-7 { background-color: #FF851B; } .color-8 { background-color: #7FDBFF; } .color-9 { background-color: #870C25; }
+        .color-swatch.color-4, .color-swatch.color-8 { color: black; text-shadow: none; }
+
+        #status-bar { margin-top: 1rem; padding: 0.75rem; text-align: center; border-radius: 5px; font-weight: bold; display: none; }
+        #check-status { padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold; margin-left: 0.5rem; opacity: 0; transition: opacity 0.3s; }
+        #check-status.visible { opacity: 1; }
+        #check-status.success { background-color: var(--success-bg); color: var(--success-color); }
+        #check-status.danger { background-color: var(--danger-bg); color: var(--danger-color); }
+
+        .grid-controls { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; justify-content: center; }
+        .grid-controls input { width: 50px; text-align: center; border: 1px solid var(--border-color); border-radius: 4px; padding: 0.25rem; }
+
+        @media (max-width: 768px) { .task-pair { flex-direction: column; align-items: center; } }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-top-row">
+            <h1 style="font-size: 1.2em; margin: 0; color: #333;">ARC Pro</h1>
+            <div class="lang-switcher">
+                <button data-lang="en">EN</button>
+                <button data-lang="ru">RU</button>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="loadRandomBtn" class="success" data-i18n="loadRandom"></button>
+            <button id="loadTaskBtn" data-i18n="loadOwn"></button>
+            <button id="createTaskBtn" data-i18n="create"></button>
+            <button id="saveTaskBtn" data-i18n="save"></button>
+            <input type="file" id="fileInput" accept=".json" style="display:none">
+        </div>
+        <div id="task-info"></div>
+        <div class="tools" id="tools-panel">
+             <div class="color-palette" id="colorPalette"></div>
+        </div>
+        <div class="tools">
+            <button id="checkSolutionBtn" data-i18n="check"></button>
+            <button id="showSolutionBtn" class="warning" data-i18n="showSolution"></button>
+            <span id="check-status"></span>
+            <label style="cursor: pointer; margin-left: 1rem;">
+                <input type="checkbox" id="showNumbersToggle"> <span data-i18n="showNumbers"></span>
+            </label>
+        </div>
+    </header>
+
+    <div class="container" id="main-container">
+        <div id="tab-nav-wrapper">
+            <div id="tab-nav"></div>
+            <div id="creator-tools">
+                <button id="addTrainBtn" class="success" data-i18n="addExample">+ Example</button>
+                <button id="addTestBtn" class="success" data-i18n="addTest">+ Test</button>
+            </div>
+        </div>
+        <div id="tab-content"></div>
+        <div id="status-bar"></div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- I18N Dictionary ---
+        const i18n = {
+            loadRandom: { en: 'Random Task', ru: 'Случайная задача' },
+            loadOwn: { en: 'Load Own', ru: 'Загрузить свою' },
+            create: { en: 'Create', ru: 'Создать' },
+            save: { en: 'Save', ru: 'Сохранить' },
+            check: { en: 'Check', ru: 'Проверить' },
+            showSolution: { en: 'Show Solution', ru: 'Показать решение' },
+            showNumbers: { en: 'Show numbers', ru: 'Показать номера' },
+            addExample: { en: '+ Example', ru: '+ Пример' },
+            addTest: { en: '+ Test', ru: '+ Тест' },
+            gridSize: { en: 'Size', ru: 'Размер' },
+            copyInput: { en: 'Copy Input', ru: 'Копировать Вход' },
+            clear: { en: 'Clear', ru: 'Очистить' },
+            inputTitle: { en: 'Input {index}', ru: 'Вход {index}' },
+            outputTitle: { en: 'Output {index}', ru: 'Выход {index}' },
+            testInputTitle: { en: 'Test Input {index}', ru: 'Тест Вход {index}' },
+            yourSolutionTitle: { en: 'Your Solution', ru: 'Ваше решение' },
+            referenceOutputTitle: { en: 'Test Output (Reference) {index}', ru: 'Тест Выход (Эталон) {index}' },
+            exampleTab: { en: 'Example {index}', ru: 'Пример {index}' },
+            testTab: { en: 'Test {index}', ru: 'Тест {index}' },
+            initialStatus: { en: 'Load a random or your own task to start.', ru: 'Загрузите случайную или свою задачу для начала работы.' },
+            loadingList: { en: 'Loading task list...', ru: 'Загрузка списка задач...' },
+            loadingTask: { en: 'Loading task {name}...', ru: 'Загрузка задачи {name}...' },
+            taskLoaded: { en: 'Task loaded successfully.', ru: 'Задача успешно загружена.' },
+            creatorMode: { en: 'Creator mode. Edit grids and add new examples/tests.', ru: 'Режим создания. Редактируйте сетки и добавляйте новые примеры/тесты.' },
+            taskSaved: { en: 'Task saved as arc_task.json', ru: 'Задача сохранена как arc_task.json' },
+            nothingToSave: { en: 'Nothing to save.', ru: 'Нечего сохранять.' },
+            errorGeneric: { en: 'Error: {message}', ru: 'Ошибка: {message}' },
+            errorNetwork: { en: 'Network error: {status}', ru: 'Ошибка сети: {status}' },
+            errorNoJson: { en: 'No .json files found in the source.', ru: 'В источнике не найдено .json файлов.' },
+            errorFileRead: { en: 'Error: Could not read file. Make sure it is a valid JSON.', ru: 'Ошибка: Не удалось прочитать файл. Убедитесь, что это корректный JSON.' },
+            correct: { en: 'Correct!', ru: 'Правильно!' },
+            incorrect: { en: 'Incorrect!', ru: 'Неправильно!' },
+            solutionShown: { en: 'Solution shown', ru: 'Решение показано' },
+            source: { en: 'Source', ru: 'Источник' },
+            localFile: { en: 'local file', ru: 'локальный файл' },
+        };
+
+        // --- Global State ---
+        let currentTaskData = null;
+        let selectedColor = 0;
+        let isDrawing = false;
+        let checkStatusTimeout;
+        let currentLang = null;
+
+        const GITHUB_SOURCES = [
+            { name: 'ARC-AGI-2 (Training)', owner: 'arcprize', repo: 'ARC-AGI-2', path: 'data/training' },
+            { name: 'ARC-AGI-2 (Evaluation)', owner: 'arcprize', repo: 'ARC-AGI-2', path: 'data/evaluation' },
+            { name: 'fchollet/ARC (Training)', owner: 'fchollet', repo: 'ARC-AGI', path: 'data/training' },
+            { name: 'fchollet/ARC (Evaluation)', owner: 'fchollet', repo: 'ARC-AGI', path: 'data/evaluation' }
+        ];
+
+        // --- DOM Elements ---
+        const dom = {
+            header: document.querySelector('.main-header'),
+            mainContainer: document.getElementById('main-container'),
+            loadRandomBtn: document.getElementById('loadRandomBtn'),
+            loadTaskBtn: document.getElementById('loadTaskBtn'),
+            createTaskBtn: document.getElementById('createTaskBtn'),
+            saveTaskBtn: document.getElementById('saveTaskBtn'),
+            fileInput: document.getElementById('fileInput'),
+            taskInfo: document.getElementById('task-info'),
+            tabNav: document.getElementById('tab-nav'),
+            tabContent: document.getElementById('tab-content'),
+            creatorTools: document.getElementById('creator-tools'),
+            addTrainBtn: document.getElementById('addTrainBtn'),
+            addTestBtn: document.getElementById('addTestBtn'),
+            colorPalette: document.getElementById('colorPalette'),
+            checkSolutionBtn: document.getElementById('checkSolutionBtn'),
+            showSolutionBtn: document.getElementById('showSolutionBtn'),
+            checkStatus: document.getElementById('check-status'),
+            showNumbersToggle: document.getElementById('showNumbersToggle'),
+            statusBar: document.getElementById('status-bar'),
+            langSwitcher: document.querySelector('.lang-switcher'),
+        };
+
+        // --- Language & UI Functions ---
+        const updateBodyPadding = () => {
+            const headerHeight = dom.header.offsetHeight;
+            document.body.style.paddingTop = `${headerHeight + 15}px`;
+        };
+
+        const setLanguage = (lang) => {
+            if (lang === currentLang) return;
+            currentLang = lang;
+            document.documentElement.lang = lang;
+            localStorage.setItem('arc-lang', lang);
+
+            dom.langSwitcher.querySelectorAll('button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                let text = i18n[key]?.[lang];
+                if (text) {
+                    if (el.dataset.i18nIndex) {
+                        text = text.replace('{index}', el.dataset.i18nIndex);
+                    }
+                    el.textContent = text;
+                }
+            });
+            
+            const lastInfo = dom.taskInfo.dataset.info;
+            if(lastInfo) {
+                const [source, file] = JSON.parse(lastInfo);
+                updateTaskInfo(source, file);
+            } else {
+                 showStatus(i18n.initialStatus[currentLang], 'info');
+            }
+        };
+
+        // --- Init ---
+        const init = () => {
+            setupPalette();
+            const savedLang = localStorage.getItem('arc-lang') || 'en';
+            setLanguage(savedLang); // Set initial language without re-rendering
+            
+            dom.showNumbersToggle.addEventListener('change', () => {
+                dom.mainContainer.classList.toggle('show-numbers', dom.showNumbersToggle.checked);
+            });
+            
+            updateBodyPadding();
+            window.addEventListener('resize', updateBodyPadding);
+        };
+
+        // --- Grid Functions ---
+        const renderGrid = (gridData, container, title, isEditable = false, gridId = null) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'grid-wrapper';
+            if (gridId) wrapper.id = gridId;
+            const titleEl = document.createElement('h3');
+            titleEl.textContent = title;
+            // Add i18n attributes for dynamic translation
+            if (gridId) {
+                if (gridId.startsWith('train-input')) titleEl.dataset.i18n = 'inputTitle';
+                else if (gridId.startsWith('train-output')) titleEl.dataset.i18n = 'outputTitle';
+                else if (gridId.startsWith('test-input')) titleEl.dataset.i18n = 'testInputTitle';
+                else if (gridId.startsWith('user-solution')) titleEl.dataset.i18n = 'yourSolutionTitle';
+                else if (gridId.startsWith('test-output')) titleEl.dataset.i18n = 'referenceOutputTitle';
+                
+                const match = gridId.match(/\d+$/);
+                if (match) titleEl.dataset.i18nIndex = parseInt(match[0]) + 1;
+            }
+            wrapper.appendChild(titleEl);
+            const gridContainer = document.createElement('div');
+            gridContainer.className = 'grid-container';
+            const rows = gridData.length;
+            const cols = gridData[0] ? gridData[0].length : 0;
+            gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    const color = gridData[r][c];
+                    cell.classList.add(`color-${color}`);
+                    cell.textContent = color;
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.dataset.color = color;
+                    if (!isEditable) cell.style.cursor = 'default';
+                    gridContainer.appendChild(cell);
+                }
+            }
+            wrapper.appendChild(gridContainer);
+            if (isEditable) {
+                wrapper.appendChild(createGridControls(gridData, wrapper));
+                addDrawingListeners(gridContainer);
+            }
+            container.appendChild(wrapper);
+            return wrapper;
+        };
+
+        const createGridControls = (gridData, gridWrapper) => {
+            const controlsContainer = document.createElement('div');
+            controlsContainer.className = 'grid-controls';
+            const rowsInput = document.createElement('input');
+            rowsInput.type = 'number';
+            rowsInput.value = gridData.length;
+            rowsInput.min = 1;
+            rowsInput.max = 30;
+            const colsInput = document.createElement('input');
+            colsInput.type = 'number';
+            colsInput.value = gridData[0] ? gridData[0].length : 0;
+            colsInput.min = 1;
+            colsInput.max = 30;
+            const resizeBtn = document.createElement('button');
+            resizeBtn.dataset.i18n = 'gridSize';
+            resizeBtn.textContent = i18n.gridSize[currentLang];
+            resizeBtn.onclick = () => resizeGrid(gridWrapper, +rowsInput.value, +colsInput.value);
+            const copyInputBtn = document.createElement('button');
+            copyInputBtn.dataset.i18n = 'copyInput';
+            copyInputBtn.textContent = i18n.copyInput[currentLang];
+            copyInputBtn.onclick = () => {
+                const inputGridContainer = gridWrapper.closest('.task-pair').querySelector('[id*="-input-"] .grid-container');
+                const inputGridData = getGridData(inputGridContainer);
+                resizeGrid(gridWrapper, inputGridData.length, inputGridData[0].length, inputGridData);
+            };
+            const clearBtn = document.createElement('button');
+            clearBtn.dataset.i18n = 'clear';
+            clearBtn.textContent = i18n.clear[currentLang];
+            clearBtn.className = 'danger';
+            clearBtn.onclick = () => {
+                const currentGridData = getGridData(gridWrapper.querySelector('.grid-container'));
+                const clearedGrid = currentGridData.map(row => row.map(() => 0));
+                resizeGrid(gridWrapper, currentGridData.length, currentGridData[0].length, clearedGrid);
+            };
+            const sizeLabel = document.createElement('span');
+            sizeLabel.dataset.i18n = 'gridSize';
+            sizeLabel.textContent = i18n.gridSize[currentLang];
+            controlsContainer.append(sizeLabel, ': ', rowsInput, 'x', colsInput, resizeBtn, copyInputBtn, clearBtn);
+            return controlsContainer;
+        };
+
+        const resizeGrid = (gridWrapper, newRows, newCols, fillData = null) => {
+            const oldGridData = getGridData(gridWrapper.querySelector('.grid-container'));
+            const newGridData = Array(newRows).fill(0).map(() => Array(newCols).fill(0));
+            const dataToFill = fillData || oldGridData;
+            for (let r = 0; r < Math.min(newRows, dataToFill.length); r++) {
+                for (let c = 0; c < Math.min(newCols, dataToFill[0] ? dataToFill[0].length : 0); c++) {
+                    newGridData[r][c] = dataToFill[r][c];
+                }
+            }
+            const parentPane = gridWrapper.closest('.task-pair');
+            const title = gridWrapper.querySelector('h3').textContent;
+            const isEditable = !!gridWrapper.querySelector('.grid-controls');
+            const gridId = gridWrapper.id;
+            gridWrapper.remove();
+            const newGridWrapper = renderGrid(newGridData, document.createDocumentFragment(), title, isEditable, gridId);
+            if (gridId.includes('input')) {
+                parentPane.insertBefore(newGridWrapper, parentPane.children[0]);
+            } else {
+                parentPane.appendChild(newGridWrapper);
+            }
+        };
+
+        const getGridData = (gridContainer) => {
+            if (!gridContainer) return [[]];
+            const cells = gridContainer.querySelectorAll('.grid-cell');
+            if (cells.length === 0) return [[]];
+            const rows = Math.max(...Array.from(cells).map(c => +c.dataset.row)) + 1;
+            const cols = gridContainer.style.gridTemplateColumns.split(' ').length;
+            const grid = Array(rows).fill(0).map(() => Array(cols).fill(0));
+            cells.forEach(cell => {
+                grid[+cell.dataset.row][+cell.dataset.col] = +cell.dataset.color;
+            });
+            return grid;
+        };
+
+        // --- Drawing Logic ---
+        const addDrawingListeners = (gridContainer) => {
+            const handleDraw = (e) => {
+                e.preventDefault();
+                let target = e.target;
+                if (e.touches) {
+                    const touch = e.touches[0];
+                    target = document.elementFromPoint(touch.clientX, touch.clientY);
+                }
+                if (target && target.classList.contains('grid-cell')) {
+                    const oldColor = target.dataset.color;
+                    target.classList.remove(`color-${oldColor}`);
+                    target.classList.add(`color-${selectedColor}`);
+                    target.dataset.color = selectedColor;
+                    target.textContent = selectedColor;
+                }
+            };
+            gridContainer.addEventListener('mousedown', (e) => { isDrawing = true; handleDraw(e); });
+            gridContainer.addEventListener('mouseover', (e) => { if (isDrawing) handleDraw(e); });
+            gridContainer.addEventListener('touchstart', (e) => { isDrawing = true; handleDraw(e); });
+            gridContainer.addEventListener('touchmove', (e) => { if (isDrawing) handleDraw(e); });
+        };
+        document.body.addEventListener('mouseup', () => isDrawing = false);
+        document.body.addEventListener('touchend', () => isDrawing = false);
+
+        // --- Palette ---
+        const setupPalette = () => {
+            dom.colorPalette.innerHTML = '';
+            for (let i = 0; i < 10; i++) {
+                const swatch = document.createElement('div');
+                swatch.className = `color-swatch color-${i}`;
+                swatch.dataset.color = i;
+                swatch.textContent = i;
+                if (i === selectedColor) swatch.classList.add('selected');
+                swatch.addEventListener('click', () => {
+                    selectedColor = i;
+                    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+                    swatch.classList.add('selected');
+                });
+                dom.colorPalette.appendChild(swatch);
+            }
+        };
+
+        // --- Tabs & UI ---
+        const createTab = (text, index, type) => {
+            const tab = document.createElement('button');
+            tab.className = 'tab-button';
+            tab.textContent = text;
+            tab.dataset.index = index;
+            tab.dataset.type = type;
+            // Add i18n attributes for dynamic translation
+            tab.dataset.i18n = type === 'train' ? 'exampleTab' : 'testTab';
+            tab.dataset.i18nIndex = index + 1;
+            dom.tabNav.appendChild(tab);
+            return tab;
+        };
+
+        const createPane = (pair, index, type, isCreatorMode) => {
+            const pane = document.createElement('div');
+            pane.className = 'tab-pane';
+            pane.id = `pane-${type}-${index}`;
+            pane.dataset.type = type;
+            pane.dataset.index = index;
+            const pairContainer = document.createElement('div');
+            pairContainer.className = 'task-pair';
+            const inputTitle = type === 'train' ? i18n.inputTitle[currentLang].replace('{index}', index + 1) : i18n.testInputTitle[currentLang].replace('{index}', index + 1);
+            const outputTitle = type === 'train' ? i18n.outputTitle[currentLang].replace('{index}', index + 1) : (isCreatorMode ? i18n.referenceOutputTitle[currentLang].replace('{index}', index + 1) : i18n.yourSolutionTitle[currentLang]);
+            const isOutputEditable = isCreatorMode || type === 'test';
+            const outputGridId = type === 'test' ? `user-solution-grid-${index}` : `train-output-${index}`;
+            const inputGridId = type === 'test' ? `test-input-${index}` : `train-input-${index}`;
+            renderGrid(pair.input, pairContainer, inputTitle, isCreatorMode, inputGridId);
+            let outputGridData = pair.output;
+            if (type === 'test' && !isCreatorMode) {
+                outputGridData = Array(pair.output.length).fill(0).map(() => Array(pair.output[0].length).fill(0));
+            }
+            renderGrid(outputGridData, pairContainer, outputTitle, isOutputEditable, outputGridId);
+            pane.appendChild(pairContainer);
+            dom.tabContent.appendChild(pane);
+            return pane;
+        };
+
+        const setupTabs = (taskData, isCreatorMode) => {
+            dom.tabNav.innerHTML = '';
+            dom.tabContent.innerHTML = '';
+            dom.creatorTools.style.display = isCreatorMode ? 'flex' : 'none';
+            (taskData.train || []).forEach((pair, i) => createPane(pair, i, 'train', isCreatorMode));
+            (taskData.test || []).forEach((pair, i) => createPane(pair, i, 'test', isCreatorMode));
+            (taskData.train || []).forEach((_, i) => createTab(i18n.exampleTab[currentLang].replace('{index}', i + 1), i, 'train'));
+            (taskData.test || []).forEach((_, i) => createTab(i18n.testTab[currentLang].replace('{index}', i + 1), i, 'test'));
+            if (dom.tabNav.firstChild) switchTab(dom.tabNav.firstChild);
+        };
+
+        const switchTab = (tabButton) => {
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            tabButton.classList.add('active');
+            const type = tabButton.dataset.type;
+            const index = tabButton.dataset.index;
+            document.getElementById(`pane-${type}-${index}`).classList.add('active');
+            const isTestTab = type === 'test';
+            dom.checkSolutionBtn.style.display = isTestTab ? 'inline-block' : 'none';
+            dom.showSolutionBtn.style.display = isTestTab ? 'inline-block' : 'none';
+            dom.checkStatus.classList.remove('visible');
+        };
+
+        // --- Main App Functions ---
+        const loadRandomTask = async () => {
+            showStatus(i18n.loadingList[currentLang], 'info');
+            updateTaskInfo('', '');
+            try {
+                const randomSource = GITHUB_SOURCES[Math.floor(Math.random() * GITHUB_SOURCES.length)];
+                const apiUrl = `https://api.github.com/repos/${randomSource.owner}/${randomSource.repo}/contents/${randomSource.path}`;
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error(i18n.errorNetwork[currentLang].replace('{status}', response.statusText));
+                const files = await response.json();
+                const jsonFiles = files.filter(file => file.name.endsWith('.json'));
+                if (jsonFiles.length === 0) throw new Error(i18n.errorNoJson[currentLang]);
+                const randomFile = jsonFiles[Math.floor(Math.random() * jsonFiles.length)];
+                showStatus(i18n.loadingTask[currentLang].replace('{name}', randomFile.name), 'info');
+                const taskResponse = await fetch(randomFile.download_url);
+                if (!taskResponse.ok) throw new Error(i18n.errorNetwork[currentLang].replace('{status}', taskResponse.statusText));
+                const taskData = await taskResponse.json();
+                loadTask(taskData);
+                updateTaskInfo(randomSource.name, randomFile.name);
+            } catch (error) {
+                showStatus(i18n.errorGeneric[currentLang].replace('{message}', error.message), 'danger');
+            }
+        };
+
+        const loadTask = (taskData) => {
+            currentTaskData = taskData;
+            setupTabs(taskData, false);
+            showStatus(i18n.taskLoaded[currentLang], 'success');
+        };
+
+        const createNewTask = () => {
+            const newTask = {
+                train: [{ input: [[0,0,0],[0,0,0],[0,0,0]], output: [[0,0,0],[0,0,0],[0,0,0]] }],
+                test: [{ input: [[0,0,0],[0,0,0],[0,0,0]], output: [[0,0,0],[0,0,0],[0,0,0]] }]
+            };
+            currentTaskData = null;
+            updateTaskInfo('', '');
+            setupTabs(newTask, true);
+            showStatus(i18n.creatorMode[currentLang], 'info');
+        };
+
+        const saveTask = () => {
+            const taskToSave = { train: [], test: [] };
+            dom.tabContent.querySelectorAll('.tab-pane').forEach(pane => {
+                const type = pane.dataset.type;
+                const inputGrid = getGridData(pane.querySelector('[id*="-input-"] .grid-container'));
+                const outputGrid = getGridData(pane.querySelector('[id*="-output-"] .grid-container, [id*="solution-grid"] .grid-container'));
+                if (inputGrid && outputGrid) {
+                    taskToSave[type].push({ input: inputGrid, output: outputGrid });
+                }
+            });
+            if (taskToSave.train.length === 0 && taskToSave.test.length === 0) {
+                showStatus(i18n.nothingToSave[currentLang], 'danger');
+                return;
+            }
+            const jsonString = JSON.stringify(taskToSave, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'arc_task.json';
+            a.click();
+            URL.revokeObjectURL(a.href);
+            showStatus(i18n.taskSaved[currentLang], 'success');
+        };
+
+        const checkSolution = () => {
+            const activeTestPane = document.querySelector('.tab-pane.active[data-type="test"]');
+            if (!currentTaskData || !activeTestPane) return;
+            const testIndex = +activeTestPane.dataset.index;
+            const userSolutionGrid = getGridData(activeTestPane.querySelector(`#user-solution-grid-${testIndex} .grid-container`));
+            const correctSolutionGrid = currentTaskData.test[testIndex].output;
+            if (JSON.stringify(userSolutionGrid) === JSON.stringify(correctSolutionGrid)) {
+                showCheckResult(i18n.correct[currentLang], 'success');
+            } else {
+                showCheckResult(i18n.incorrect[currentLang], 'danger');
+            }
+        };
+
+        const showSolution = () => {
+            const activeTestPane = document.querySelector('.tab-pane.active[data-type="test"]');
+            if (!currentTaskData || !activeTestPane) return;
+            const testIndex = +activeTestPane.dataset.index;
+            const solutionGridData = currentTaskData.test[testIndex].output;
+            const userGridWrapper = activeTestPane.querySelector(`#user-solution-grid-${testIndex}`);
+            resizeGrid(userGridWrapper, solutionGridData.length, solutionGridData[0].length, solutionGridData);
+            showCheckResult(i18n.solutionShown[currentLang], 'warning');
+        };
+
+        const addNewPair = (type) => {
+            const newIndex = document.querySelectorAll(`.tab-pane[data-type="${type}"]`).length;
+            const text = type === 'train' ? i18n.exampleTab[currentLang].replace('{index}', newIndex + 1) : i18n.testTab[currentLang].replace('{index}', newIndex + 1);
+            createPane({ input: [[0]], output: [[0]] }, newIndex, type, true);
+            const newTab = createTab(text, newIndex, type);
+            switchTab(newTab);
+        };
+
+        // --- Status Functions ---
+        const showStatus = (message, type = 'info') => {
+            dom.statusBar.textContent = message;
+            dom.statusBar.style.display = 'block';
+            dom.statusBar.style.backgroundColor = `var(--${type}-bg, var(--bg-color))`;
+            dom.statusBar.style.color = `var(--${type}-color, var(--text-color))`;
+        };
+
+        const showCheckResult = (message, type) => {
+            clearTimeout(checkStatusTimeout);
+            dom.checkStatus.textContent = message;
+            dom.checkStatus.className = `visible ${type}`;
+            checkStatusTimeout = setTimeout(() => dom.checkStatus.classList.remove('visible'), 3000);
+        };
+        
+        const updateTaskInfo = (sourceName, fileName) => {
+            if (sourceName && fileName) {
+                dom.taskInfo.textContent = `${i18n.source[currentLang]}: ${sourceName} / ${fileName}`;
+                dom.taskInfo.dataset.info = JSON.stringify([sourceName, fileName]);
+            } else {
+                dom.taskInfo.textContent = '';
+                dom.taskInfo.dataset.info = '';
+            }
+        };
+
+        // --- Event Listeners ---
+        dom.loadRandomBtn.addEventListener('click', loadRandomTask);
+        dom.loadTaskBtn.addEventListener('click', () => dom.fileInput.click());
+        dom.fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const taskData = JSON.parse(e.target.result);
+                    updateTaskInfo(i18n.localFile[currentLang], file.name);
+                    loadTask(taskData);
+                } catch (error) {
+                    showStatus(i18n.errorFileRead[currentLang], 'danger');
+                }
+            };
+            reader.readAsText(file);
+            dom.fileInput.value = '';
+        });
+        dom.createTaskBtn.addEventListener('click', createNewTask);
+        dom.saveTaskBtn.addEventListener('click', saveTask);
+        dom.checkSolutionBtn.addEventListener('click', checkSolution);
+        dom.showSolutionBtn.addEventListener('click', showSolution);
+        dom.addTrainBtn.addEventListener('click', () => addNewPair('train'));
+        dom.addTestBtn.addEventListener('click', () => addNewPair('test'));
+        dom.tabNav.addEventListener('click', (e) => { if (e.target.classList.contains('tab-button')) switchTab(e.target); });
+        dom.langSwitcher.addEventListener('click', (e) => { if (e.target.matches('button[data-lang]')) setLanguage(e.target.dataset.lang); });
+
+        // --- Run ---
+        init();
+    });
+    </script>
+</body>
+</html>
