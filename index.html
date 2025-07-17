@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARC Pro v4.2 | Task Solver & Editor</title>
+    <title>ARC Pro v4.3 | Task Solver & Editor</title>
+    <!-- ПОДКЛЮЧАЕМ GOOGLE ICONS -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <style>
         :root {
             --bg-color: #f0f2f5;
@@ -26,7 +28,6 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            /* padding-top будет установлен динамически через JS */
             transition: padding-top 0.2s;
         }
 
@@ -72,7 +73,6 @@
             padding: 1rem;
         }
         
-        /* --- НОВЫЙ БЛОК: Панель управления с иконками --- */
         .control-bar {
             display: flex;
             flex-wrap: wrap;
@@ -102,18 +102,13 @@
             .control-bar { justify-content: space-around; }
         }
 
-        /* --- ОБНОВЛЕННЫЕ СТИЛИ КНОПОК --- */
         button, .tab-button, .icon-btn {
-            padding: 0.6rem 1.2rem;
             font-size: 1rem;
             border-radius: 5px;
             border: 1px solid transparent;
             cursor: pointer;
-            color: white;
-            background-color: var(--primary-color);
             transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
         }
-        button:hover, .tab-button:hover, .icon-btn:hover { background-color: var(--primary-hover); }
         button:active, .icon-btn:active { transform: scale(0.95); }
 
         .icon-btn {
@@ -124,15 +119,30 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            background-color: var(--primary-color);
+            color: white;
         }
-        .icon-btn svg {
-            width: 22px;
-            height: 22px;
-            fill: white;
+        .icon-btn:hover { background-color: var(--primary-hover); }
+        .icon-btn .material-symbols-outlined {
+            font-size: 28px;
+            color: white;
         }
 
-        .tab-button { background-color: #6c757d; }
+        /* --- ОБНОВЛЕННЫЕ СТИЛИ ДЛЯ ТАБОВ --- */
+        .tab-button {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.8rem;
+            background-color: #6c757d;
+            color: white;
+            font-weight: 500;
+        }
+        .tab-button:hover { background-color: #5a6268; }
         .tab-button.active { background-color: var(--primary-color); font-weight: bold; }
+        .tab-button .material-symbols-outlined {
+            font-size: 20px;
+        }
 
         .icon-btn.success { background-color: var(--success-color); }
         .icon-btn.success:hover { background-color: #218838; }
@@ -143,25 +153,18 @@
 
         #task-info { text-align: center; font-size: 0.8em; color: #6c757d; height: 1em; margin-bottom: 1rem; }
         
-        /* --- УЛУЧШЕННАЯ ПЕРЕМОТКА (НАВИГАЦИЯ) --- */
         #tab-nav-wrapper {
             display: flex;
             align-items: center;
             gap: 1rem;
             overflow-x: auto;
             white-space: nowrap;
-            -webkit-overflow-scrolling: touch; /* Плавная прокрутка на iOS */
-            scrollbar-width: none; /* Скрыть скроллбар в Firefox */
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
             padding: 0.5rem 0;
         }
-        #tab-nav-wrapper::-webkit-scrollbar {
-            display: none; /* Скрыть скроллбар в Chrome/Safari */
-        }
-        #tab-nav {
-            display: flex;
-            gap: 0.5rem;
-            /* flex-wrap: nowrap; - не нужен, т.к. white-space: nowrap у родителя */
-        }
+        #tab-nav-wrapper::-webkit-scrollbar { display: none; }
+        #tab-nav { display: flex; gap: 0.5rem; }
         #creator-tools { display: none; gap: 0.5rem; flex-shrink: 0; }
         
         .tab-pane { display: none; animation: fadeIn 0.5s; }
@@ -211,27 +214,28 @@
         
         <div class="control-bar">
             <div class="control-group">
+                <!-- ИСПОЛЬЗУЕМ ИКОНКУ ПАЗЛА -->
                 <button id="loadRandomBtn" class="icon-btn success" data-i18n-title="loadRandom">
-                    <svg viewBox="0 0 24 24"><path d="M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12c0-2.76 1.12-5.26 2.93-7.07L12 12V2c5.52 0 10 4.48 10 10zm-9-7.55V12H5.45C7.19 7.1 11.71 4 17 4c-1.75 0-3.35.57-4.65 1.52L13 4.45zM4.93 4.93C3.12 6.74 2 9.24 2 12c0 5.52 4.48 10 10 10v-7.55L4.93 4.93z"/></svg>
+                    <span class="material-symbols-outlined">extension</span>
                 </button>
                 <button id="loadTaskBtn" class="icon-btn" data-i18n-title="loadOwn">
-                    <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+                    <span class="material-symbols-outlined">upload_file</span>
                 </button>
                 <button id="createTaskBtn" class="icon-btn" data-i18n-title="create">
-                    <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                    <span class="material-symbols-outlined">add</span>
                 </button>
                 <button id="saveTaskBtn" class="icon-btn" data-i18n-title="save">
-                    <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+                    <span class="material-symbols-outlined">save</span>
                 </button>
                 <input type="file" id="fileInput" accept=".json" style="display:none">
             </div>
             <div class="separator"></div>
             <div class="control-group">
                 <button id="checkSolutionBtn" class="icon-btn success" data-i18n-title="check">
-                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                    <span class="material-symbols-outlined">task_alt</span>
                 </button>
                 <button id="showSolutionBtn" class="icon-btn warning" data-i18n-title="showSolution">
-                    <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 10c-2.48 0-4.5-2.02-4.5-4.5S9.52 5.5 12 5.5s4.5 2.02 4.5 4.5-2.02 4.5-4.5 4.5zm0-7C10.62 7.5 9.5 8.62 9.5 10s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5S13.38 7.5 12 7.5z"/></svg>
+                    <span class="material-symbols-outlined">visibility</span>
                 </button>
                 <span id="check-status"></span>
             </div>
@@ -339,7 +343,6 @@
 
         // --- Language & UI Functions ---
         const updateBodyPadding = () => {
-            // Отступ теперь зависит от шапки и панели управления
             const headerHeight = dom.header.offsetHeight;
             const controlBarHeight = document.querySelector('.control-bar').offsetHeight;
             document.body.style.paddingTop = `${headerHeight}px`;
@@ -356,7 +359,6 @@
                 btn.classList.toggle('active', btn.dataset.lang === lang);
             });
 
-            // Обновляем текст элементов
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.dataset.i18n;
                 let text = i18n[key]?.[lang];
@@ -368,13 +370,15 @@
                 }
             });
             
-            // ОБНОВЛЕНО: Обновляем всплывающие подсказки (title) для кнопок-иконок
             document.querySelectorAll('[data-i18n-title]').forEach(el => {
                 const key = el.dataset.i18nTitle;
-                const titleText = i18n[key]?.[lang];
+                let titleText = i18n[key]?.[lang];
                 if (titleText) {
+                    if (el.dataset.i18nIndex) {
+                        titleText = titleText.replace('{index}', el.dataset.i18nIndex);
+                    }
                     el.title = titleText;
-                    el.setAttribute('aria-label', titleText); // Для доступности
+                    el.setAttribute('aria-label', titleText);
                 }
             });
             
@@ -397,12 +401,11 @@
                 document.getElementById('main-container').classList.toggle('show-numbers', dom.showNumbersToggle.checked);
             });
             
-            // Запускаем с небольшой задержкой, чтобы все элементы успели отрендериться
             setTimeout(updateBodyPadding, 50);
             window.addEventListener('resize', updateBodyPadding);
         };
 
-        // --- Grid Functions ---
+        // --- Grid Functions (no changes here) ---
         const renderGrid = (gridData, container, title, isEditable = false, gridId = null) => {
             const wrapper = document.createElement('div');
             wrapper.className = 'grid-wrapper';
@@ -447,7 +450,6 @@
             container.appendChild(wrapper);
             return wrapper;
         };
-
         const createGridControls = (gridData, gridWrapper) => {
             const controlsContainer = document.createElement('div');
             controlsContainer.className = 'grid-controls';
@@ -488,7 +490,6 @@
             controlsContainer.append(sizeLabel, ': ', rowsInput, 'x', colsInput, resizeBtn, copyInputBtn, clearBtn);
             return controlsContainer;
         };
-
         const resizeGrid = (gridWrapper, newRows, newCols, fillData = null) => {
             const oldGridData = getGridData(gridWrapper.querySelector('.grid-container'));
             const newGridData = Array(newRows).fill(0).map(() => Array(newCols).fill(0));
@@ -510,7 +511,6 @@
                 parentPane.appendChild(newGridWrapper);
             }
         };
-
         const getGridData = (gridContainer) => {
             if (!gridContainer) return [[]];
             const cells = gridContainer.querySelectorAll('.grid-cell');
@@ -524,7 +524,7 @@
             return grid;
         };
 
-        // --- Drawing Logic ---
+        // --- Drawing Logic (no changes here) ---
         const addDrawingListeners = (gridContainer) => {
             const handleDraw = (e) => {
                 e.preventDefault();
@@ -549,7 +549,7 @@
         document.body.addEventListener('mouseup', () => isDrawing = false);
         document.body.addEventListener('touchend', () => isDrawing = false);
 
-        // --- Palette ---
+        // --- Palette (no changes here) ---
         const setupPalette = () => {
             dom.colorPalette.innerHTML = '';
             for (let i = 0; i < 10; i++) {
@@ -568,14 +568,23 @@
         };
 
         // --- Tabs & UI ---
-        const createTab = (text, index, type) => {
+        // ИЗМЕНЕНА ФУНКЦИЯ createTab
+        const createTab = (index, type) => {
             const tab = document.createElement('button');
             tab.className = 'tab-button';
-            tab.textContent = text;
             tab.dataset.index = index;
             tab.dataset.type = type;
-            tab.dataset.i18n = type === 'train' ? 'exampleTab' : 'testTab';
+
+            const iconName = type === 'train' ? 'task_alt' : 'science';
+            const titleKey = type === 'train' ? 'exampleTab' : 'testTab';
+            
+            // Используем innerHTML для добавления иконки и номера
+            tab.innerHTML = `<span class="material-symbols-outlined">${iconName}</span> ${index + 1}`;
+            
+            // Устанавливаем data-атрибуты для всплывающей подсказки, которая будет переводиться
+            tab.dataset.i18nTitle = titleKey;
             tab.dataset.i18nIndex = index + 1;
+
             dom.tabNav.appendChild(tab);
             return tab;
         };
@@ -604,14 +613,20 @@
             return pane;
         };
 
+        // ИЗМЕНЕНА ФУНКЦИЯ setupTabs
         const setupTabs = (taskData, isCreatorMode) => {
             dom.tabNav.innerHTML = '';
             dom.tabContent.innerHTML = '';
             dom.creatorTools.style.display = isCreatorMode ? 'flex' : 'none';
             (taskData.train || []).forEach((pair, i) => createPane(pair, i, 'train', isCreatorMode));
             (taskData.test || []).forEach((pair, i) => createPane(pair, i, 'test', isCreatorMode));
-            (taskData.train || []).forEach((_, i) => createTab(i18n.exampleTab[currentLang].replace('{index}', i + 1), i, 'train'));
-            (taskData.test || []).forEach((_, i) => createTab(i18n.testTab[currentLang].replace('{index}', i + 1), i, 'test'));
+            // Теперь передаем только индекс и тип
+            (taskData.train || []).forEach((_, i) => createTab(i, 'train'));
+            (taskData.test || []).forEach((_, i) => createTab(i, 'test'));
+            
+            // Обновляем заголовки для только что созданных табов
+            setLanguage(currentLang);
+
             if (dom.tabNav.firstChild) switchTab(dom.tabNav.firstChild);
         };
 
@@ -628,7 +643,7 @@
             dom.checkStatus.classList.remove('visible');
         };
 
-        // --- Main App Functions ---
+        // --- Main App Functions (no major changes) ---
         const loadRandomTask = async () => {
             showStatus(i18n.loadingList[currentLang], 'info');
             updateTaskInfo('', '');
@@ -651,13 +666,11 @@
                 showStatus(i18n.errorGeneric[currentLang].replace('{message}', error.message), 'danger');
             }
         };
-
         const loadTask = (taskData) => {
             currentTaskData = taskData;
             setupTabs(taskData, false);
             showStatus(i18n.taskLoaded[currentLang], 'success');
         };
-
         const createNewTask = () => {
             const newTask = {
                 train: [{ input: [[0,0,0],[0,0,0],[0,0,0]], output: [[0,0,0],[0,0,0],[0,0,0]] }],
@@ -668,7 +681,6 @@
             setupTabs(newTask, true);
             showStatus(i18n.creatorMode[currentLang], 'info');
         };
-
         const saveTask = () => {
             const taskToSave = { train: [], test: [] };
             dom.tabContent.querySelectorAll('.tab-pane').forEach(pane => {
@@ -692,7 +704,6 @@
             URL.revokeObjectURL(a.href);
             showStatus(i18n.taskSaved[currentLang], 'success');
         };
-
         const checkSolution = () => {
             const activeTestPane = document.querySelector('.tab-pane.active[data-type="test"]');
             if (!currentTaskData || !activeTestPane) return;
@@ -705,7 +716,6 @@
                 showCheckResult(i18n.incorrect[currentLang], 'danger');
             }
         };
-
         const showSolution = () => {
             const activeTestPane = document.querySelector('.tab-pane.active[data-type="test"]');
             if (!currentTaskData || !activeTestPane) return;
@@ -715,30 +725,34 @@
             resizeGrid(userGridWrapper, solutionGridData.length, solutionGridData[0].length, solutionGridData);
             showCheckResult(i18n.solutionShown[currentLang], 'warning');
         };
-
+        // ИЗМЕНЕНА ФУНКЦИЯ addNewPair
         const addNewPair = (type) => {
             const newIndex = document.querySelectorAll(`.tab-pane[data-type="${type}"]`).length;
-            const text = type === 'train' ? i18n.exampleTab[currentLang].replace('{index}', newIndex + 1) : i18n.testTab[currentLang].replace('{index}', newIndex + 1);
             createPane({ input: [[0]], output: [[0]] }, newIndex, type, true);
-            const newTab = createTab(text, newIndex, type);
+            const newTab = createTab(newIndex, type);
+            // Обновляем title для новой вкладки
+            const titleKey = type === 'train' ? 'exampleTab' : 'testTab';
+            let titleText = i18n[titleKey]?.[currentLang];
+            if (titleText) {
+                newTab.title = titleText.replace('{index}', newIndex + 1);
+                newTab.setAttribute('aria-label', newTab.title);
+            }
             switchTab(newTab);
         };
 
-        // --- Status Functions ---
+        // --- Status Functions (no changes here) ---
         const showStatus = (message, type = 'info') => {
             dom.statusBar.textContent = message;
             dom.statusBar.style.display = 'block';
             dom.statusBar.style.backgroundColor = `var(--${type}-bg, var(--bg-color))`;
             dom.statusBar.style.color = `var(--${type}-color, var(--text-color))`;
         };
-
         const showCheckResult = (message, type) => {
             clearTimeout(checkStatusTimeout);
             dom.checkStatus.textContent = message;
             dom.checkStatus.className = `visible ${type}`;
             checkStatusTimeout = setTimeout(() => dom.checkStatus.classList.remove('visible'), 3000);
         };
-        
         const updateTaskInfo = (sourceName, fileName) => {
             if (sourceName && fileName) {
                 dom.taskInfo.textContent = `${i18n.source[currentLang]}: ${sourceName} / ${fileName}`;
@@ -774,7 +788,10 @@
         dom.showSolutionBtn.addEventListener('click', showSolution);
         dom.addTrainBtn.addEventListener('click', () => addNewPair('train'));
         dom.addTestBtn.addEventListener('click', () => addNewPair('test'));
-        dom.tabNav.addEventListener('click', (e) => { if (e.target.classList.contains('tab-button')) switchTab(e.target); });
+        dom.tabNav.addEventListener('click', (e) => { 
+            const tabButton = e.target.closest('.tab-button');
+            if (tabButton) switchTab(tabButton); 
+        });
         dom.langSwitcher.addEventListener('click', (e) => { if (e.target.matches('button[data-lang]')) setLanguage(e.target.dataset.lang); });
 
         // --- Run ---
