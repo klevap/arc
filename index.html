@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARC Pro v4.1 | Task Solver & Editor</title>
+    <title>ARC Pro v4.2 | Task Solver & Editor</title>
     <style>
         :root {
             --bg-color: #f0f2f5;
@@ -36,19 +36,12 @@
             left: 0;
             right: 0;
             background: var(--panel-bg);
-            padding: 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            padding: 0.75rem 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .header-top-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
             gap: 1rem;
         }
 
@@ -76,18 +69,41 @@
             width: 100%;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 1rem;
+            padding: 1rem;
         }
-
-        .controls, .tools {
+        
+        /* --- НОВЫЙ БЛОК: Панель управления с иконками --- */
+        .control-bar {
             display: flex;
             flex-wrap: wrap;
             gap: 0.75rem;
+            padding: 1rem;
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
             justify-content: center;
             align-items: center;
         }
 
-        button, .tab-button {
+        .control-group {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .separator {
+            width: 1px;
+            height: 30px;
+            background-color: var(--border-color);
+            margin: 0 0.5rem;
+        }
+        
+        @media (max-width: 480px) {
+            .separator { display: none; }
+            .control-bar { justify-content: space-around; }
+        }
+
+        /* --- ОБНОВЛЕННЫЕ СТИЛИ КНОПОК --- */
+        button, .tab-button, .icon-btn {
             padding: 0.6rem 1.2rem;
             font-size: 1rem;
             border-radius: 5px;
@@ -95,30 +111,64 @@
             cursor: pointer;
             color: white;
             background-color: var(--primary-color);
-            transition: background-color 0.2s, border-color 0.2s;
+            transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
+        }
+        button:hover, .tab-button:hover, .icon-btn:hover { background-color: var(--primary-hover); }
+        button:active, .icon-btn:active { transform: scale(0.95); }
+
+        .icon-btn {
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .icon-btn svg {
+            width: 22px;
+            height: 22px;
+            fill: white;
         }
 
-        button:hover, .tab-button:hover { background-color: var(--primary-hover); }
         .tab-button { background-color: #6c757d; }
         .tab-button.active { background-color: var(--primary-color); font-weight: bold; }
 
-        button.success { background-color: var(--success-color); }
-        button.success:hover { background-color: #218838; }
-        button.warning { background-color: var(--warning-color); color: #212529; }
-        button.warning:hover { background-color: #e0a800; }
-        button.danger { background-color: var(--danger-color); }
-        button.danger:hover { background-color: #c82333; }
+        .icon-btn.success { background-color: var(--success-color); }
+        .icon-btn.success:hover { background-color: #218838; }
+        .icon-btn.warning { background-color: var(--warning-color); }
+        .icon-btn.warning:hover { background-color: #e0a800; }
+        .icon-btn.danger { background-color: var(--danger-color); }
+        .icon-btn.danger:hover { background-color: #c82333; }
 
-        #task-info { text-align: center; font-size: 0.8em; color: #6c757d; height: 1em; }
-        #tab-nav-wrapper { display: flex; justify-content: center; align-items: center; gap: 1rem; flex-wrap: wrap; }
-        #tab-nav { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
-        #creator-tools { display: none; gap: 0.5rem; }
+        #task-info { text-align: center; font-size: 0.8em; color: #6c757d; height: 1em; margin-bottom: 1rem; }
+        
+        /* --- УЛУЧШЕННАЯ ПЕРЕМОТКА (НАВИГАЦИЯ) --- */
+        #tab-nav-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch; /* Плавная прокрутка на iOS */
+            scrollbar-width: none; /* Скрыть скроллбар в Firefox */
+            padding: 0.5rem 0;
+        }
+        #tab-nav-wrapper::-webkit-scrollbar {
+            display: none; /* Скрыть скроллбар в Chrome/Safari */
+        }
+        #tab-nav {
+            display: flex;
+            gap: 0.5rem;
+            /* flex-wrap: nowrap; - не нужен, т.к. white-space: nowrap у родителя */
+        }
+        #creator-tools { display: none; gap: 0.5rem; flex-shrink: 0; }
         
         .tab-pane { display: none; animation: fadeIn 0.5s; }
         .tab-pane.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .task-pair { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 2rem; padding: 1rem; background: var(--panel-bg); border-radius: 8px; }
+        .task-pair { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 2rem; padding: 1rem; margin-top: 1rem; background: var(--panel-bg); border-radius: 8px; }
         .grid-wrapper { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
         .grid-wrapper h3 { margin: 0; font-weight: 500; }
         .grid-container { display: grid; border: 2px solid var(--grid-bg); background-color: var(--grid-bg); gap: 1px; touch-action: none; }
@@ -127,6 +177,7 @@
         .show-numbers .grid-cell { color: white; text-shadow: 0 0 2px rgba(0,0,0,0.7); }
         .show-numbers .grid-cell.color-4, .show-numbers .grid-cell.color-8 { color: black; text-shadow: none; }
 
+        .tools-panel { padding: 1rem 0; }
         .color-palette { display: flex; justify-content: center; flex-wrap: wrap; gap: 5px; }
         .color-swatch { width: 35px; height: 35px; border: 2px solid transparent; border-radius: 5px; cursor: pointer; transition: transform 0.2s, border-color 0.2s; display: flex; justify-content: center; align-items: center; font-weight: bold; color: white; text-shadow: 0 0 3px black; }
         .color-swatch.selected { border-color: var(--primary-color); transform: scale(1.2); }
@@ -149,35 +200,53 @@
 <body>
 
     <header class="main-header">
-        <div class="header-top-row">
-            <h1 style="font-size: 1.2em; margin: 0; color: #333;">ARC Pro</h1>
-            <div class="lang-switcher">
-                <button data-lang="en">EN</button>
-                <button data-lang="ru">RU</button>
-            </div>
-        </div>
-        <div class="controls">
-            <button id="loadRandomBtn" class="success" data-i18n="loadRandom"></button>
-            <button id="loadTaskBtn" data-i18n="loadOwn"></button>
-            <button id="createTaskBtn" data-i18n="create"></button>
-            <button id="saveTaskBtn" data-i18n="save"></button>
-            <input type="file" id="fileInput" accept=".json" style="display:none">
-        </div>
-        <div id="task-info"></div>
-        <div class="tools" id="tools-panel">
-             <div class="color-palette" id="colorPalette"></div>
-        </div>
-        <div class="tools">
-            <button id="checkSolutionBtn" data-i18n="check"></button>
-            <button id="showSolutionBtn" class="warning" data-i18n="showSolution"></button>
-            <span id="check-status"></span>
-            <label style="cursor: pointer; margin-left: 1rem;">
-                <input type="checkbox" id="showNumbersToggle"> <span data-i18n="showNumbers"></span>
-            </label>
+        <h1 style="font-size: 1.2em; margin: 0; color: #333;">ARC Pro</h1>
+        <div class="lang-switcher">
+            <button data-lang="en">EN</button>
+            <button data-lang="ru" class="active">RU</button>
         </div>
     </header>
 
     <div class="container" id="main-container">
+        
+        <div class="control-bar">
+            <div class="control-group">
+                <button id="loadRandomBtn" class="icon-btn success" data-i18n-title="loadRandom">
+                    <svg viewBox="0 0 24 24"><path d="M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12c0-2.76 1.12-5.26 2.93-7.07L12 12V2c5.52 0 10 4.48 10 10zm-9-7.55V12H5.45C7.19 7.1 11.71 4 17 4c-1.75 0-3.35.57-4.65 1.52L13 4.45zM4.93 4.93C3.12 6.74 2 9.24 2 12c0 5.52 4.48 10 10 10v-7.55L4.93 4.93z"/></svg>
+                </button>
+                <button id="loadTaskBtn" class="icon-btn" data-i18n-title="loadOwn">
+                    <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+                </button>
+                <button id="createTaskBtn" class="icon-btn" data-i18n-title="create">
+                    <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                </button>
+                <button id="saveTaskBtn" class="icon-btn" data-i18n-title="save">
+                    <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+                </button>
+                <input type="file" id="fileInput" accept=".json" style="display:none">
+            </div>
+            <div class="separator"></div>
+            <div class="control-group">
+                <button id="checkSolutionBtn" class="icon-btn success" data-i18n-title="check">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                </button>
+                <button id="showSolutionBtn" class="icon-btn warning" data-i18n-title="showSolution">
+                    <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 10c-2.48 0-4.5-2.02-4.5-4.5S9.52 5.5 12 5.5s4.5 2.02 4.5 4.5-2.02 4.5-4.5 4.5zm0-7C10.62 7.5 9.5 8.62 9.5 10s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5S13.38 7.5 12 7.5z"/></svg>
+                </button>
+                <span id="check-status"></span>
+            </div>
+        </div>
+
+        <div id="task-info"></div>
+
+        <div class="tools-panel">
+             <div class="color-palette" id="colorPalette"></div>
+        </div>
+        
+        <label style="cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+            <input type="checkbox" id="showNumbersToggle"> <span data-i18n="showNumbers"></span>
+        </label>
+
         <div id="tab-nav-wrapper">
             <div id="tab-nav"></div>
             <div id="creator-tools">
@@ -270,8 +339,11 @@
 
         // --- Language & UI Functions ---
         const updateBodyPadding = () => {
+            // Отступ теперь зависит от шапки и панели управления
             const headerHeight = dom.header.offsetHeight;
-            document.body.style.paddingTop = `${headerHeight + 15}px`;
+            const controlBarHeight = document.querySelector('.control-bar').offsetHeight;
+            document.body.style.paddingTop = `${headerHeight}px`;
+            dom.mainContainer.style.paddingTop = `${controlBarHeight}px`;
         };
 
         const setLanguage = (lang) => {
@@ -284,6 +356,7 @@
                 btn.classList.toggle('active', btn.dataset.lang === lang);
             });
 
+            // Обновляем текст элементов
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.dataset.i18n;
                 let text = i18n[key]?.[lang];
@@ -292,6 +365,16 @@
                         text = text.replace('{index}', el.dataset.i18nIndex);
                     }
                     el.textContent = text;
+                }
+            });
+            
+            // ОБНОВЛЕНО: Обновляем всплывающие подсказки (title) для кнопок-иконок
+            document.querySelectorAll('[data-i18n-title]').forEach(el => {
+                const key = el.dataset.i18nTitle;
+                const titleText = i18n[key]?.[lang];
+                if (titleText) {
+                    el.title = titleText;
+                    el.setAttribute('aria-label', titleText); // Для доступности
                 }
             });
             
@@ -307,14 +390,15 @@
         // --- Init ---
         const init = () => {
             setupPalette();
-            const savedLang = localStorage.getItem('arc-lang') || 'en';
-            setLanguage(savedLang); // Set initial language without re-rendering
+            const savedLang = localStorage.getItem('arc-lang') || 'ru';
+            setLanguage(savedLang);
             
             dom.showNumbersToggle.addEventListener('change', () => {
-                dom.mainContainer.classList.toggle('show-numbers', dom.showNumbersToggle.checked);
+                document.getElementById('main-container').classList.toggle('show-numbers', dom.showNumbersToggle.checked);
             });
             
-            updateBodyPadding();
+            // Запускаем с небольшой задержкой, чтобы все элементы успели отрендериться
+            setTimeout(updateBodyPadding, 50);
             window.addEventListener('resize', updateBodyPadding);
         };
 
@@ -325,7 +409,6 @@
             if (gridId) wrapper.id = gridId;
             const titleEl = document.createElement('h3');
             titleEl.textContent = title;
-            // Add i18n attributes for dynamic translation
             if (gridId) {
                 if (gridId.startsWith('train-input')) titleEl.dataset.i18n = 'inputTitle';
                 else if (gridId.startsWith('train-output')) titleEl.dataset.i18n = 'outputTitle';
@@ -491,7 +574,6 @@
             tab.textContent = text;
             tab.dataset.index = index;
             tab.dataset.type = type;
-            // Add i18n attributes for dynamic translation
             tab.dataset.i18n = type === 'train' ? 'exampleTab' : 'testTab';
             tab.dataset.i18nIndex = index + 1;
             dom.tabNav.appendChild(tab);
@@ -541,8 +623,8 @@
             const index = tabButton.dataset.index;
             document.getElementById(`pane-${type}-${index}`).classList.add('active');
             const isTestTab = type === 'test';
-            dom.checkSolutionBtn.style.display = isTestTab ? 'inline-block' : 'none';
-            dom.showSolutionBtn.style.display = isTestTab ? 'inline-block' : 'none';
+            dom.checkSolutionBtn.style.display = isTestTab ? 'flex' : 'none';
+            dom.showSolutionBtn.style.display = isTestTab ? 'flex' : 'none';
             dom.checkStatus.classList.remove('visible');
         };
 
