@@ -373,7 +373,6 @@
         };
 
         // --- Language & UI Functions ---
-        // ИЗМЕНЕНА ФУНКЦИЯ ДЛЯ РАСЧЕТА ОТСТУПА
         const updateLayout = () => {
             const headerHeight = dom.appHeader.offsetHeight;
             document.body.style.paddingTop = `${headerHeight}px`;
@@ -419,7 +418,6 @@
             } else {
                  showStatus(i18n.initialStatus[currentLang], 'info');
             }
-            // После смены языка нужно пересчитать layout, т.к. длина текста могла измениться
             setTimeout(updateLayout, 0);
         };
 
@@ -675,11 +673,29 @@
                 showStatus(i18n.errorGeneric[currentLang].replace('{message}', error.message), 'danger');
             }
         };
+        
+        // --- ИЗМЕНЕНО ---
+        // Эта функция теперь обрабатывает оба формата JSON
         const loadTask = (taskData) => {
-            currentTaskData = taskData;
-            setupTabs(taskData, false);
+            let processedTaskData = taskData;
+
+            // Проверяем, является ли загруженный JSON массивом (формат RE_ARC)
+            if (Array.isArray(taskData)) {
+                console.log("Detected array format, converting to train/test structure.");
+                // Если это массив, преобразуем его в стандартный объект,
+                // где все примеры являются обучающими (train), а тестов (test) нет.
+                processedTaskData = {
+                    train: taskData,
+                    test: []
+                };
+            }
+
+            currentTaskData = processedTaskData;
+            setupTabs(processedTaskData, false); // Используем обработанные данные
             showStatus(i18n.taskLoaded[currentLang], 'success');
         };
+        // --- КОНЕЦ ИЗМЕНЕНИЙ ---
+
         const createNewTask = () => {
             const newTask = {
                 train: [{ input: [[0,0,0],[0,0,0],[0,0,0]], output: [[0,0,0],[0,0,0],[0,0,0]] }],
